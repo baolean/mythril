@@ -66,6 +66,7 @@ class MythrilAnalyzer:
         args.unconstrained_storage = cmd_args.unconstrained_storage
         args.call_depth_limit = cmd_args.call_depth_limit
         args.iprof = cmd_args.enable_iprof
+        args.perf_prof = cmd_args.enable_perf_prof
         args.solver_log = cmd_args.solver_log
         args.transaction_sequences = cmd_args.transaction_sequences
 

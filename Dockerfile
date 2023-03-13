@@ -26,6 +26,7 @@ RUN apt-get update \
      pandoc \
      git \
      wget \
+     vim \
   && ln -s /usr/bin/python3 /usr/local/bin/python
 
 COPY ./requirements.txt /opt/mythril/requirements.txt

@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import sys
+import cProfile, pstats, io
 
 import coloredlogs
 import traceback
@@ -352,8 +353,23 @@ def main() -> None:
     # Get config values
 
     args = parser.parse_args()
+
+    if args.enable_perf_prof:
+        pr = cProfile.Profile()
+        pr.enable()
+
     parse_args_and_execute(parser=parser, args=args)
 
+    if args.enable_perf_prof:
+        pr.disable()
+        sortby = pstats.SortKey.CUMULATIVE
+        ps = pstats.Stats(pr).sort_stats(sortby)
+        ps.print_stats(20)
+
+        profile_path = os.path.join("./", "myth_performance.prof")
+        with open(profile_path, "wb") as f:
+            import marshal
+            marshal.dump(ps.stats, f)
 
 def create_disassemble_parser(parser: ArgumentParser):
     """
@@ -556,6 +572,9 @@ def add_analysis_args(options):
     )
     options.add_argument(
         "--enable-iprof", action="store_true", help="enable the instruction profiler"
+    )
+    options.add_argument(
+        "--enable-perf-prof", action="store_true", help="enable the performance profiler"
     )
     options.add_argument(
         "--disable-dependency-pruning",
@@ -872,10 +891,14 @@ def execute_command(
                     "markdown": report.as_markdown(),
                 }
                 print(outputs[args.outform])
-                if len(report.issues) > 0:
-                    exit(1)
+                if args.enable_perf_prof:
+                    # return to `main()` to report profiling results
+                    return
                 else:
-                    exit(0)
+                    if len(report.issues) > 0:
+                        exit(1)
+                    else:
+                        exit(0)
             except DetectorNotFoundError as e:
                 exit_with_error(args.outform, format(e))
             except CriticalError as e:

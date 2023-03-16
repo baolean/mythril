@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -13,26 +13,36 @@ RUN apt-get update \
      apt-utils \
      build-essential \
      locales \
-     python-pip-whl \
      python3-pip \
      python3-setuptools \
-     software-properties-common \
+     software-properties-common cmake \
   && add-apt-repository -y ppa:ethereum/ethereum \
   && apt-get update \
   && apt-get install -y \
-     solc \
      libssl-dev \
      python3-dev \
      pandoc \
      git \
      wget \
      vim \
+     curl \
   && ln -s /usr/bin/python3 /usr/local/bin/python
 
 COPY ./requirements.txt /opt/mythril/requirements.txt
 
+RUN pip install solc-select \
+    && solc-select install 0.8.13 \
+    && solc-select use 0.8.13
+
+# Install Rust
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup override set nightly
+
+RUN pip install maturin
+
 RUN cd /opt/mythril \
-  && pip3 install -r requirements.txt
+  && pip install -r requirements.txt
 
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
@@ -43,10 +53,8 @@ COPY . /opt/mythril
 RUN cd /opt/mythril \
   && python setup.py install
 
-WORKDIR /home/mythril
-
 RUN ( [ ! -z "${SOLC}" ] && set -e && for ver in $SOLC; do python -m solc.install v${ver}; done ) || true
 
 COPY ./mythril/support/assets/signatures.db /home/mythril/.mythril/signatures.db
 
-ENTRYPOINT ["/usr/local/bin/myth"]
+ENTRYPOINT ["/bin/bash"]

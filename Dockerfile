@@ -31,8 +31,8 @@ RUN apt-get update \
 COPY ./requirements.txt /opt/mythril/requirements.txt
 
 RUN pip install solc-select \
-    && solc-select install 0.8.13 \
-    && solc-select use 0.8.13
+    && solc-select install 0.8.17 \
+    && solc-select use 0.8.17
 
 # Install Rust
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
